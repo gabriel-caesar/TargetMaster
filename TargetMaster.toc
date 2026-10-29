@@ -1,0 +1,6 @@
+## Interface: 11200
+## Title: TargetMaster
+## Notes: Improves targeting while in a group/raid by the use of target shortcuts.
+
+TargetMaster.xml
+TargetMaster.lua

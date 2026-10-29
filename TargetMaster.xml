@@ -1,0 +1,77 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
+
+  <Button name="CountTemplate" virtual="true" frameStrata="MEDIUM" frameLevel="8">
+    <Size x="32" y="32" />
+    <Anchors>
+      <Anchor point="BOTTOMRIGHT" />
+    </Anchors>
+
+    <Layers>
+      <Layer level="BACKGROUND" setAllPoints="true">
+        <!-- This file path is a plain round background -->
+        <Texture name="$parent_Background" file="Interface\TargetingFrame\UI-TargetingFrame-AttackBackground">
+          <Size x="32" y="32"/>
+          <Anchors>
+            <Anchor point="CENTER"/>
+          </Anchors>
+        </Texture>
+      </Layer>
+      <Layer level="OVERLAY">
+        <FontString name="$parent_Text" inherits="GameFontNormal" text="0">
+          <Anchors>
+            <Anchor point="CENTER">
+              <Offset x="0" y="2"/>
+            </Anchor>
+          </Anchors>
+        </FontString>
+
+        <Texture name="$parent_Border" file="Interface\Minimap\MiniMap-TrackingBorder">
+          <Size x="52" y="52" />
+          <Anchors>
+            <Anchor point="TOPLEFT"/>
+          </Anchors>
+        </Texture>
+      </Layer>
+    </Layers>
+
+    <HighlightTexture file="Interface\Minimap\UI-Minimap-ZoomButton-Highlight" alphaMode="ADD"/>
+  </Button>
+
+  <Frame name="TargetMaster">
+    <Size x="120" y="50" />
+    <Anchors>
+      <Anchor point="RIGHT">
+        <Offset x="-50" y="0" />
+      </Anchor>
+    </Anchors>
+    
+
+    <Frames>
+      <Button name="$parent_RefreshButton" inherits="UIPanelButtonTemplate">
+        <Size x="120" y="30" />
+        <Anchors>
+          <Anchor point="RIGHT">
+            <Offset x="-50" y="0" />
+          </Anchor>
+        </Anchors>
+        <Layers>
+          <Layer level="OVERLAY">
+            <FontString inherits="GameFontNormal" text="Target"/>
+          </Layer>
+        </Layers>
+
+        <Scripts>
+          <OnClick>
+            TargetMaster_GetTargets()
+            TargetMaster_IssueTargeting()
+          </OnClick>
+        </Scripts>
+
+      </Button>
+    </Frames>
+  </Frame>
+
+
+</Ui>
