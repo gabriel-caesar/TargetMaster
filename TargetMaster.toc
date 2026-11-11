@@ -1,6 +1,9 @@
 ## Interface: 11200
 ## Title: TargetMaster
 ## Notes: Improves targeting while in a group/raid by the use of target shortcuts.
+## SavedVariablesPerCharacter: TM_config
 
 TargetMaster.xml
 TargetMaster.lua
+Menu.xml
+Menu.lua

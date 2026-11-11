@@ -1,0 +1,306 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
+
+<Button name="KeybindTemplate" virtual="true" inherits="OptionsButtonTemplate">
+  <Size x="130" y="20"/>
+</Button>
+
+<Button name="TargetMaster_Icon" parent="Minimap" frameStrata="MEDIUM" frameLevel="8" movable="true" enableMouse="true">
+  <Size x="32" y="32" />
+  <Anchors>
+    <Anchor point="TOPLEFT"/>
+  </Anchors>
+  <Layers>
+    <Layer level="ARTWORK">
+      <Texture name="$parent_Texture" file="Interface\ICONS\Ability_hunter_snipershot">
+        <Size x="20" y="20" />
+        <Anchors>
+          <Anchor point="CENTER"/>
+        </Anchors>
+      </Texture>
+    </Layer>
+    <Layer level="OVERLAY">
+      <Texture name="$parent_Border" file="Interface\Minimap\MiniMap-TrackingBorder">
+        <Size x="52" y="52" />
+        <Anchors>
+          <Anchor point="TOPLEFT"/>
+        </Anchors>
+      </Texture>
+    </Layer>
+  </Layers>
+
+  <HighlightTexture file="Interface\Minimap\UI-Minimap-ZoomButton-Highlight" alphaMode="ADD"/>
+
+  <!-- Special hover scripts -->
+  <Scripts>
+    <OnLoad>
+      this:RegisterForDrag("RightButton");
+    </OnLoad>
+    <OnDragStart> 
+      this:StartMoving()
+    </OnDragStart> 
+    <OnDragStop>
+      this:StopMovingOrSizing()
+    </OnDragStop>
+    <OnClick>
+      if MenuFrame:IsVisible() then MenuFrame:Hide() else MenuFrame:Show() end
+    </OnClick>
+    <OnEnter>
+      GameTooltip:SetOwner(this, ANCHOR_BOTTOMLEFT)
+      GameTooltip:SetText("TargetMaster", 1, 1, 1)
+      GameTooltip:AddLine("Left click to open", NORMAL_FONT_COLOR.r,NORMAL_FONT_COLOR.g,NORMAL_FONT_COLOR.b)
+      GameTooltip:AddLine("Right click to drag", NORMAL_FONT_COLOR.r,NORMAL_FONT_COLOR.g,NORMAL_FONT_COLOR.b)
+      GameTooltip:Show()
+    </OnEnter>
+    <OnLeave>
+      GameTooltip:Hide()
+    </OnLeave>
+  </Scripts>
+
+</Button>
+
+
+<Frame name="MenuFrame" inherits="UIParent" hidden="true">
+  <Size x="400" y="450" />
+  <Anchors>
+    <Anchor point="CENTER"/>
+  </Anchors>
+
+  <!-- Menu frame background -->
+  <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+    <BackgroundInsets>
+      <AbsInset left="11" right="12" top="12" bottom="11"/>
+    </BackgroundInsets>
+    <TileSize>
+      <AbsValue val="32"/>
+    </TileSize>
+    <EdgeSize>
+      <AbsValue val="32"/>
+    </EdgeSize>
+  </Backdrop>
+
+  <Frames>
+    <Button name="$parent_CloseButton" inherits="UIPanelCloseButton">
+      <Size x="32" y="32" />
+      <Anchors>
+        <Anchor point="TOPRIGHT">
+          <Offset x="-11" y="-11" />
+        </Anchor>
+      </Anchors>
+    </Button>
+
+    <EditBox name="$parent_TankInput" autoFocus="false" inherits="InputBoxTemplate">
+      <Size x="100" y="20"/>
+      <Anchors>
+        <Anchor point="TOPRIGHT">
+          <Offset x="-70" y="-60"/>
+        </Anchor>
+      </Anchors>
+
+      <Scripts>
+        <OnEscapePressed>this:ClearFocus()</OnEscapePressed>
+        <OnTextChanged>
+          TM_config.TankInputText = this:GetText()
+        </OnTextChanged>
+        <OnEnter>
+          GameTooltip:SetOwner(this, ANCHOR_TOPLEFT)
+          GameTooltip:SetText("Will target the assigned tank member", 1, 1, 1)
+          GameTooltip:AddLine("This feature only works if you have written the name", NORMAL_FONT_COLOR.r,NORMAL_FONT_COLOR.g,NORMAL_FONT_COLOR.b)
+          GameTooltip:AddLine("of the tank member in the provided input box. Failing to", NORMAL_FONT_COLOR.r,NORMAL_FONT_COLOR.g,NORMAL_FONT_COLOR.b)
+          GameTooltip:AddLine("do so, will make this function fail.", NORMAL_FONT_COLOR.r,NORMAL_FONT_COLOR.g,NORMAL_FONT_COLOR.b)
+          GameTooltip:Show()
+        </OnEnter>
+        <OnLeave>
+          GameTooltip:Hide()
+        </OnLeave>
+      </Scripts>
+      
+      <FontString inherits="GameFontHighlight"/>
+      <Layers>
+        <Layer level="OVERLAY">
+          <FontString name="$parent_FontString" inherits="GameFontNormal" text="Set tank member name">
+            <Anchors>
+              <Anchor point="LEFT">
+                <Offset x="-160" y="0" />
+              </Anchor>
+            </Anchors>
+          </FontString>
+        </Layer>
+      </Layers>
+    </EditBox>
+
+    <EditBox name="$parent_TargetedByCountInput" autoFocus="false" inherits="InputBoxTemplate">
+      <Size x="50" y="25"/>
+      <Anchors>
+        <Anchor point="TOP" relativeTo="$parent_TankInput" relativePoint="BOTTOM">
+          <Offset x="-26" y="-17" />
+        </Anchor>
+      </Anchors>
+      <Layers>
+        <Layer level="BACKGROUND">
+          <FontString name="$parentLabel" inherits="GameFontNormal" text="Number of names displayed">
+            <Anchors>
+              <Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMLEFT">
+                <Offset>
+                  <AbsDimension x="-33" y="5"/>
+                </Offset>
+              </Anchor>
+            </Anchors>
+          </FontString>
+        </Layer>
+      </Layers>
+
+      <Scripts>
+        <OnEscapePressed>this:ClearFocus()</OnEscapePressed>
+          <OnTextChanged>
+            if TM_config.TargetedByCount == nil then 
+              TM_config.TargetedByCount = DEFAULT_NAMES_TARGET_COUNT
+              this:SetText(TM_config.TargetedByCount)
+            end
+            TM_config.TargetedByCount = this:GetText()
+        </OnTextChanged>
+        <OnEnter>
+          GameTooltip:SetOwner(this, ANCHOR_TOPLEFT)
+          GameTooltip:SetText("Sets the limit amount of member names", 1, 1, 1)
+          GameTooltip:AddLine("When targeting a unit, a target counter frame will show up", NORMAL_FONT_COLOR.r,NORMAL_FONT_COLOR.g,NORMAL_FONT_COLOR.b)
+          GameTooltip:AddLine("on top of the creature frame. If hovered, it will show you", NORMAL_FONT_COLOR.r,NORMAL_FONT_COLOR.g,NORMAL_FONT_COLOR.b)
+          GameTooltip:AddLine("all member names that share that same target.", NORMAL_FONT_COLOR.r,NORMAL_FONT_COLOR.g,NORMAL_FONT_COLOR.b)
+          GameTooltip:AddLine("Defaults to 5.", NORMAL_FONT_COLOR.r,NORMAL_FONT_COLOR.g,NORMAL_FONT_COLOR.b)
+          GameTooltip:Show()
+        </OnEnter>
+        <OnLeave>
+          GameTooltip:Hide()
+        </OnLeave>
+      </Scripts>
+    </EditBox>
+
+    <CheckButton name="$parent_OnTargetingCheckButton" inherits="OptionsCheckButtonTemplate" enable="false">
+      <Size x="32" y="32"/>
+      <Anchors>
+        <Anchor point="CENTER">
+          <Offset x="37" y="65" />
+        </Anchor>
+      </Anchors>
+      <HitRectInsets>
+        <AbsInset left="0" right="0" top="0" bottom="0"/>
+      </HitRectInsets>
+      <Scripts>
+        <OnClick>
+          TM_config.AttackOnTarget = this:GetChecked() 
+        </OnClick>
+      </Scripts>
+      <Layers>
+        <Layer level="OVERLAY">
+          <FontString name="$parent_OnTargetingFontString" inherits="GameFontNormal" text="Attack on target">
+            <Anchors>
+              <Anchor point="RIGHT">
+                <Offset x="-63" y="0" />
+              </Anchor>
+            </Anchors>
+          </FontString>
+        </Layer>
+      </Layers>
+
+      <Scripts>
+        <OnEnter>
+          GameTooltip:SetOwner(this, ANCHOR_TOPLEFT)
+          GameTooltip:SetText("Will automatically attack the most targeted unit", 1, 1, 1)
+          GameTooltip:AddLine("In order for this feature to work, you are required to have", NORMAL_FONT_COLOR.r,NORMAL_FONT_COLOR.g,NORMAL_FONT_COLOR.b)
+          GameTooltip:AddLine("your attack action assigned to a slot in your action bar with", NORMAL_FONT_COLOR.r,NORMAL_FONT_COLOR.g,NORMAL_FONT_COLOR.b)
+          GameTooltip:AddLine("a valid keybind attached to it.", NORMAL_FONT_COLOR.r,NORMAL_FONT_COLOR.g,NORMAL_FONT_COLOR.b)
+          GameTooltip:Show()
+        </OnEnter>
+        <OnLeave>
+          GameTooltip:Hide()
+        </OnLeave>
+      </Scripts>
+    </CheckButton>
+
+    <CheckButton name="$parent_ShowTargetButtons" inherits="OptionsCheckButtonTemplate" enable="false">
+      <Size x="32" y="32"/>
+      <Anchors>
+        <Anchor point="CENTER">
+          <Offset x="37" y="25" />
+        </Anchor>
+      </Anchors>
+      <HitRectInsets>
+        <AbsInset left="0" right="0" top="0" bottom="0"/>
+      </HitRectInsets>
+      <Layers>
+        <Layer level="OVERLAY">
+          <FontString name="$parent_OnTargetingFontString" inherits="GameFontNormal" text="Show target buttons">
+            <Anchors>
+              <Anchor point="RIGHT">
+                <Offset x="-63" y="0" />
+              </Anchor>
+            </Anchors>
+          </FontString>
+        </Layer>
+      </Layers>
+
+      <Scripts>
+        <OnClick>
+          TM_HandleButtonsVisibility()
+        </OnClick>
+        <OnEnter>
+          GameTooltip:SetOwner(this, ANCHOR_TOPLEFT)
+          GameTooltip:SetText("Shows a button frame for all |cFF1EE08DTargetMaster|cFFFFFFFF functions", 1, 1, 1)
+          GameTooltip:Show()
+        </OnEnter>
+        <OnLeave>
+          GameTooltip:Hide()
+        </OnLeave>
+      </Scripts>
+    </CheckButton>
+  </Frames>
+
+  <Layers>
+    <Layer level="OVERLAY">
+      <FontString name="$parent_GeneralTitle" inherits="GameFontHighlight" text="General">
+        <Anchors>
+          <Anchor point="TOP">
+            <Offset x="0" y="-30" />
+          </Anchor>
+        </Anchors>
+      </FontString>
+
+      <FontString name="$parent_InformationTitle" inherits="GameFontHighlight" text="Information">
+        <Anchors>
+          <Anchor point="CENTER">
+            <Offset x="0" y="-70" />
+          </Anchor>
+        </Anchors>
+      </FontString>
+
+      <FontString spacing="4" name="$parent_InformationBody" inherits="GameFontHighlight" text="To have keybinds assigned to |cFF1EE08DTargetMaster's|cFFFFFFFF functions, go to |cFFFFD100Key Bindings|cFFFFFFFF panel from the original game menu, scroll all the way to the bottom and manage the keys you desire to bind.">
+        <Size x="250" y="0"/>
+        <Anchors>
+          <Anchor point="CENTER">
+            <Offset x="0" y="-130" />
+          </Anchor>
+        </Anchors>
+      </FontString>
+    </Layer>
+    
+    <Layer level="ARTWORK">
+      <Texture name="$parentHeader" file="Interface\DialogFrame\UI-DialogBox-Header">
+        <Size x="290" y="64"/>
+        <Anchors>
+          <Anchor point="TOP">
+            <Offset x="0" y="14" />
+          </Anchor>
+        </Anchors>
+      </Texture>
+
+      <FontString name="$parent_Title" inherits="GameFontNormal" text="TargetMaster">
+        <Anchors>
+          <Anchor point="TOP" />
+        </Anchors>
+      </FontString>
+    </Layer>
+  </Layers>
+
+</Frame>
+
+</Ui>

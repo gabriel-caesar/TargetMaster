@@ -1,0 +1,16 @@
+<Bindings>
+  <Binding name="TARGETMASTER_MOSTTARGETED" header="TARGETMASTER">
+    TM_GetTargets()
+    TM_IssueTargeting()
+    Update_CountTexture()
+  </Binding>
+
+  <Binding name="TARGETMASTER_TARGETTANK">
+    TM_TargetTank()
+  </Binding>
+
+  <Binding name="TARGETMASTER_TARGETLEASTHEALTHY">
+    TM_TargetLeastHealthyMember()
+  </Binding>
+
+</Bindings>

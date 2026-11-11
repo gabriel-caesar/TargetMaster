@@ -2,6 +2,7 @@
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
 
+  <!-- Target count frame -->
   <Button name="CountTemplate" virtual="true" frameStrata="MEDIUM" frameLevel="8">
     <Size x="32" y="32" />
     <Anchors>
@@ -11,8 +12,8 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
     <Layers>
       <Layer level="BACKGROUND" setAllPoints="true">
         <!-- This file path is a plain round background -->
-        <Texture name="$parent_Background" file="Interface\TargetingFrame\UI-TargetingFrame-AttackBackground">
-          <Size x="32" y="32"/>
+        <Texture name="$parent_Background">
+          <Size x="24" y="24"/>
           <Anchors>
             <Anchor point="CENTER"/>
           </Anchors>
@@ -39,21 +40,73 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
     <HighlightTexture file="Interface\Minimap\UI-Minimap-ZoomButton-Highlight" alphaMode="ADD"/>
   </Button>
 
+
+  <!-- Parent for the target count frame that shows on top of the target portrait -->
   <Frame name="TargetMaster">
-    <Size x="120" y="50" />
+    <Size x="180" y="230"/>
     <Anchors>
-      <Anchor point="RIGHT">
+      <Anchor point="RIGHT"/>    
+    </Anchors>
+  </Frame>
+
+  <!-- Target button options for each TargetMaster function -->
+  <Frame name="TargetButtons" hidden="true" parent="UIParent" enableMouse="true" movable="true" frameStrata="12">
+    <Size x="180" y="230"/>
+    <Anchors>
+      <Anchor point="CENTER">
         <Offset x="-50" y="0" />
       </Anchor>
     </Anchors>
-    
 
+    <Scripts>
+      <OnLoad>
+        this:RegisterForDrag("LeftButton");
+      </OnLoad>
+      <OnDragStart> 
+        this:StartMoving()
+      </OnDragStart> 
+      <OnDragStop>
+        this:StopMovingOrSizing()
+      </OnDragStop>
+    </Scripts>
+
+    <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+    <BackgroundInsets>
+      <AbsInset left="11" right="12" top="12" bottom="11"/>
+    </BackgroundInsets>
+    <TileSize>
+      <AbsValue val="32"/>
+    </TileSize>
+    <EdgeSize>
+      <AbsValue val="32"/>
+    </EdgeSize>
+    </Backdrop>
+
+    <Layers>
+      <Layer level="ARTWORK">
+        <Texture name="$parentHeader" file="Interface\DialogFrame\UI-DialogBox-Header">
+          <Size x="290" y="64"/>
+          <Anchors>
+            <Anchor point="TOP">
+              <Offset x="0" y="14" />
+            </Anchor>
+          </Anchors>
+        </Texture>
+
+        <FontString name="$parent_Title" inherits="GameFontNormal" text="TargetButtons">
+          <Anchors>
+            <Anchor point="TOP" />
+          </Anchors>
+        </FontString>
+      </Layer>
+    </Layers>
+    
     <Frames>
-      <Button name="$parent_RefreshButton" inherits="UIPanelButtonTemplate">
-        <Size x="120" y="30" />
+      <Button name="$parent_TargetButton" inherits="UIPanelButtonTemplate" hidden="false">
+        <Size x="150" y="30" />
         <Anchors>
-          <Anchor point="RIGHT">
-            <Offset x="-50" y="0" />
+          <Anchor point="TOP">
+            <Offset x="0" y="-40" />
           </Anchor>
         </Anchors>
         <Layers>
@@ -64,14 +117,55 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
 
         <Scripts>
           <OnClick>
-            TargetMaster_GetTargets()
-            TargetMaster_IssueTargeting()
+            TM_GetTargets()
+            TM_IssueTargeting()
+            Update_CountTexture()
+          </OnClick>
+        </Scripts>
+
+      </Button>
+
+      <Button name="$parent_TargetTankButton" inherits="UIPanelButtonTemplate" hidden="false">
+        <Size x="150" y="30" />
+        <Anchors>
+          <Anchor point="CENTER">
+            <Offset x="0" y="0" />
+          </Anchor>
+        </Anchors>
+        <Layers>
+          <Layer level="OVERLAY">
+            <FontString inherits="GameFontNormal" text="Target Tank"/>
+          </Layer>
+        </Layers>
+
+        <Scripts>
+          <OnClick>
+            TM_TargetTank()
+          </OnClick>
+        </Scripts>
+
+      </Button>
+      <Button name="$parent_TargetLeastHealthy" inherits="UIPanelButtonTemplate" hidden="false">
+        <Size x="150" y="30" />
+        <Anchors>
+          <Anchor point="BOTTOM">
+            <Offset x="0" y="40" />
+          </Anchor>
+        </Anchors>
+        <Layers>
+          <Layer level="OVERLAY">
+            <FontString inherits="GameFontNormal" text="Target Least Healthy"/>
+          </Layer>
+        </Layers>
+
+        <Scripts>
+          <OnClick>
+            TM_TargetLeastHealthyMember()
           </OnClick>
         </Scripts>
 
       </Button>
     </Frames>
   </Frame>
-
 
 </Ui>
