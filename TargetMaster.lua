@@ -1,7 +1,7 @@
 -- #################### FUNCTIONS ####################
 -- TM = TargetMaster
--- Create_CountTexture()
--- Update_CountTexture()
+-- Create_TargetCountFrame()
+-- Update_TargetCountFrame()
 -- TM_Initialize()
 -- TM_CheckGroup()
 -- TM_OnEvent()
@@ -22,6 +22,17 @@ BINDING_NAME_TARGETMASTER_MOSTTARGETED = "Target most targeted unit"
 BINDING_NAME_TARGETMASTER_TARGETLEASTHEALTHY = "Target least healthy member"
 BINDING_NAME_TARGETMASTER_TARGETTANK = "Target tank member"
 DEFAULT_NAMES_TARGET_COUNT = 5
+RAID_CLASS_COLORS = {
+      ["WARRIOR"] = { r = 0.78, g = 0.61, b = 0.43, colorStr = "ffc79c6e" },
+      ["MAGE"]    = { r = 0.41, g = 0.8,  b = 0.94, colorStr = "ff69ccf0" },
+      ["ROGUE"]   = { r = 1,    g = 0.96, b = 0.41, colorStr = "fffff569" },
+      ["DRUID"]   = { r = 1,    g = 0.49, b = 0.04, colorStr = "ffff7d0a" },
+      ["HUNTER"]  = { r = 0.67, g = 0.83, b = 0.45, colorStr = "ffabd473" },
+      ["SHAMAN"]  = { r = 0.14, g = 0.35, b = 1.0,  colorStr = "ff0070de" },
+      ["PRIEST"]  = { r = 1,    g = 1,    b = 1,    colorStr = "ffffffff" },
+      ["WARLOCK"] = { r = 0.58, g = 0.51, b = 0.79, colorStr = "ff9482c9" },
+      ["PALADIN"] = { r = 0.96, g = 0.55, b = 0.73, colorStr = "fff58cba" },
+    }
 
 TM_config = {}
 
@@ -43,11 +54,12 @@ function TM_Initialize()
   TM.Targets = {}
   TM.MembersInfo = {} -- Holds member's name, hp and party token
   TM.GroupStatus = ""
+  TM.PlayerRaidToken = ""
   TM.NumberOfMembers = 0
   TM.CountFontString = nil
 end
 
-function Create_CountTexture()
+function Create_TargetCountFrame()
   -- Creating the target count frame from the CountTemplate defined in the XML file
   TM.TargetCountFrame = CreateFrame("Button", "TargetCountFrame", TargetFrame, "CountTemplate")
 
@@ -81,7 +93,7 @@ function TM_OnEvent()
   if event == "PLAYER_TARGET_CHANGED" then 
     if TM.GroupStatus == "raid" or TM.GroupStatus == "party" then
       TM_GetTargets()
-      Update_CountTexture()
+      Update_TargetCountFrame()
       TM.TargetCountFrame:Show()
     else 
       TM.TargetCountFrame:Hide()
@@ -98,7 +110,7 @@ function TM_OnEvent()
       -- Will run a single update to check targets and
       -- update the UI as the player joins a group
       TM_GetTargets()
-      Update_CountTexture()
+      Update_TargetCountFrame()
       TM.TargetCountFrame:Show()
     end
     
@@ -189,26 +201,26 @@ end
 
 
 -- TM.Targets will store its elements like so:
--- TM.Targets["target"] = { "Thorson" }
--- TM.Targets["party1target"] = { "Leroyjenkins", "Healadin" }
+-- { "target": { names: { "Warriorwrecker" }, tokens: { "party1" } } }
+-- { "raid1": { names: { "Magecd" }, tokens: { "raid3" } } }
 function TM_GetTargets()
   -- Reset targets every function call, so counts don't add up
   TM_ClearTargets()
 
-  -- First of all, adding the player's target if there is one (party only)
-  if TM.GroupStatus == "party" then
-    if UnitExists("target") then 
-      TM.Targets["target"] = { 
-        names = { UnitName("player") },
-        tokens = { "player" }
-      }
-    end
+  -- First of all, adding the player's target if there is one
+  if UnitExists("target") then 
+    TM.Targets["target"] = { 
+      names = { UnitName("player") },
+      tokens = { "player" }
+    }
   end
 
   for i = 1, TM.NumberOfMembers do 
-    local token = TM.GroupStatus .. i .. "target"
+    local member = TM.GroupStatus .. i
+    local token = member .. "target"
     
-    if UnitExists(token) then 
+    -- Skipping yourself since your target is added above
+    if not UnitIsUnit(member, "player") and UnitExists(token) then 
       -- `found` will be recreated every iteration, no
       -- need to turn it back to false at the end of the loop body
       local found = false
@@ -216,22 +228,21 @@ function TM_GetTargets()
       -- Iterate through every target inside `targets` frequency table
       for tgt, _ in pairs(TM.Targets) do 
         -- Check if the unit being targeted matches
-        -- the anyone from the frequency table
+        -- anyone from the frequency table
         if UnitIsUnit(token, tgt) then 
           -- If the unit token is targeting matches `tgt`, then add
           -- the name of the member that is targeting it to the existing record
-          table.insert(TM.Targets[tgt].names, getn(TM.Targets[tgt].names) + 1, UnitName(TM.GroupStatus .. i))
-          table.insert(TM.Targets[tgt].tokens, getn(TM.Targets[tgt].tokens) + 1, TM.GroupStatus .. i)
+          table.insert(TM.Targets[tgt].names, getn(TM.Targets[tgt].names) + 1, UnitName(member))
+          table.insert(TM.Targets[tgt].tokens, getn(TM.Targets[tgt].tokens) + 1, member)
           found = true
           break
         end
       end
-  
       -- If no match was found, create a new record from scratch
       if not found then 
         TM.Targets[token] = {
-          names = { UnitName(TM.GroupStatus .. i) },
-          tokens = { TM.GroupStatus .. i }
+          names = { UnitName(member) },
+          tokens = { member }
         }
       end
     end
@@ -240,14 +251,39 @@ function TM_GetTargets()
   TM.TargetCountFrame:Show()
 end
 
-function Update_CountTexture()
+function Update_TargetCountFrame()
 
-  if UnitExists("target") then
+  -- Used to keep track of the user character's target.
+  -- This can change in a raid, since while in raid groups,
+  -- the user's target token becomes raid2target, where `2`
+  -- can be random.
+  local TargetToken = "target"
+
+  -- Find the key target token that matches the player target
+  -- and update TargetToken to store it
+  if TM.GroupStatus == "raid" then 
+    local PlayerRaidTokenTarget = TM.PlayerRaidToken .. "target"
+    for TargetKey, _ in pairs(TM.Targets) do 
+      if UnitIsUnit(TargetKey, PlayerRaidTokenTarget) then
+        TargetToken = TargetKey
+        break
+      end
+    end
+
+    -- If no match was found, assign the target
+    -- related to the raid player target
+    if TargetToken == "target" then
+      TargetToken = TM.PlayerRaidToken .. "target"
+    end
+  end
+
+  
+  if UnitExists(TargetToken) then
     TM.TargetCountFrame:ClearAllPoints()
     TM.TargetCountFrame:SetPoint("CENTER", TargetFrame, "CENTER", -113, 30)
 
     -- Get the target count 
-    TM.CountFontString:SetText(tostring(TM_GetCountFromTarget("target")))
+    TM.CountFontString:SetText(tostring(TM_GetCountFromTarget(TargetToken)))
     TM.TargetCountFrame:Show()
 
     -- Handling the target count frame tooltip
@@ -257,10 +293,17 @@ function Update_CountTexture()
 
       local NamesLimitCount = TM_config.TargetedByCount
       local NamesCountRemainder = 0
-      local NumberOfTargetNames = getn(TM.Targets["target"].names)
+      local NumberOfTargetNames = 0
+      
+      -- Find the player token as a raid member
+      NumberOfTargetNames = getn(TM.Targets[TargetToken].names)
 
       -- Avoids the code from mistakenly crashing if the count is not convertible
-      if tonumber(NamesLimitCount) == nil then 
+      if (
+        tonumber(NamesLimitCount) == nil or
+        tonumber(NamesLimitCount) > NumberOfTargetNames or
+        tonumber(NamesLimitCount) <= 0
+      ) then 
         -- If the default number count is bigger than the
         -- amount of target names, default to the amount of names
         if DEFAULT_NAMES_TARGET_COUNT > NumberOfTargetNames then
@@ -272,21 +315,6 @@ function Update_CountTexture()
         NamesLimitCount = tonumber(NamesLimitCount)
       end
 
-      -- If the count desired is bigger than the number of target
-      -- names or if it is smaller than or equal to zero
-      if (NamesLimitCount > NumberOfTargetNames or
-          NamesLimitCount <= 0) then
-
-        -- If the default number count is bigger than the
-        -- amount of target names, default to the amount of names
-        if DEFAULT_NAMES_TARGET_COUNT > NumberOfTargetNames then
-          NamesLimitCount = NumberOfTargetNames
-        else
-          NamesLimitCount = DEFAULT_NAMES_TARGET_COUNT
-        end
-
-      end
-
       -- Will get the remainder number of names to display
       -- in the count frame hover tooltip
       if NumberOfTargetNames - NamesLimitCount > 0 then 
@@ -296,13 +324,15 @@ function Update_CountTexture()
       for i = 1, NamesLimitCount do 
         -- Gets the member's class color and paint its
         -- name text with it
-        local MemberName = TM.Targets["target"].names[i]
-        local MemberToken = TM.Targets["target"].tokens[i]
+        local MemberName = TM.Targets[TargetToken].names[i]
+        local MemberToken = TM.Targets[TargetToken].tokens[i]
         local UnitClassName = string.upper(UnitClass(MemberToken))
-        local rc, bc, gc = GetClassColor(UnitClassName)
+
+        -- Finding the right class color
+        local color = RAID_CLASS_COLORS[UnitClassName]
 
         -- Inserting the party member name
-        GameTooltip:AddLine(MemberName, rc,bc,gc)
+        GameTooltip:AddLine(MemberName, color.r,color.g,color.b)
         
         -- If the names count was capped, this line 
         -- shows the count remainder to the user
@@ -314,7 +344,7 @@ function Update_CountTexture()
       GameTooltip:Show()
     end)
     TM.TargetCountFrame:SetScript("OnLeave", function() GameTooltip:Hide() end)
-
+    
   else
     TM.TargetCountFrame:Hide()
   end
@@ -401,4 +431,4 @@ end
 -- Order matters
 TM_Initialize() -- Create table props and register events
 TM_CheckGroup() -- Checks if the group is a raid or a party
-Create_CountTexture() -- Creates the count prop frame that shows on top of your target portrait
+Create_TargetCountFrame() -- Creates the count prop frame that shows on top of your target portrait

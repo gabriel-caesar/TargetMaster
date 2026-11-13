@@ -2,7 +2,7 @@
   <Binding name="TARGETMASTER_MOSTTARGETED" header="TARGETMASTER">
     TM_GetTargets()
     TM_IssueTargeting()
-    Update_CountTexture()
+    Update_TargetCountFrame()
   </Binding>
 
   <Binding name="TARGETMASTER_TARGETTANK">

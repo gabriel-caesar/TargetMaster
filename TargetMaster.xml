@@ -119,7 +119,7 @@ xsi:schemaLocation="http://www.blizzard.com/wow/ui/">
           <OnClick>
             TM_GetTargets()
             TM_IssueTargeting()
-            Update_CountTexture()
+            Update_TargetCountFrame()
           </OnClick>
         </Scripts>
 
