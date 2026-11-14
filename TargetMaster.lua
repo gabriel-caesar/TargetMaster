@@ -332,15 +332,16 @@ function Update_TargetCountFrame()
         local color = RAID_CLASS_COLORS[UnitClassName]
 
         -- Inserting the party member name
-        GameTooltip:AddLine(MemberName, color.r,color.g,color.b)
-        
-        -- If the names count was capped, this line 
-        -- shows the count remainder to the user
-        if NamesCountRemainder > 0 then 
-          GameTooltip:AddLine("And " .. NamesCountRemainder .. " more...", 1,1,1)
-        end
+        GameTooltip:AddLine(MemberName, color.r,color.g,color.b)  
+      end
+      
+      -- If the names count was capped, this line 
+      -- shows the count remainder to the user
+      if NamesCountRemainder > 0 then 
+        GameTooltip:AddLine("And " .. NamesCountRemainder .. " more...", 1,1,1)
       end
 
+      
       GameTooltip:Show()
     end)
     TM.TargetCountFrame:SetScript("OnLeave", function() GameTooltip:Hide() end)
